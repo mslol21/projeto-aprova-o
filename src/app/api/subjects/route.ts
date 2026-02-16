@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     if (!session) return unauthorized()
 
     const body = await request.json()
-    const { name } = createSubjectSchema.parse(body)
+    const { name, weight, difficulty, color } = createSubjectSchema.parse(body)
 
     // Check plan limit
     if (session.plan === 'free') {
@@ -42,6 +42,9 @@ export async function POST(request: Request) {
     const subject = await prisma.subject.create({
       data: {
         name,
+        weight,
+        difficulty,
+        color,
         userId: session.userId,
       },
     })

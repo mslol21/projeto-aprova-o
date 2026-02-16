@@ -14,7 +14,10 @@ export const loginSchema = z.object({
 
 // Subject schemas
 export const createSubjectSchema = z.object({
-  name: z.string().min(1, 'Nome é obrigatório').max(100)
+  name: z.string().min(1, 'Nome é obrigatório').max(100),
+  weight: z.number().int().min(1).max(5).default(1),
+  difficulty: z.number().int().min(1).max(5).default(3),
+  color: z.string().optional().default('#3b82f6')
 })
 
 // Session schemas
@@ -22,6 +25,9 @@ export const createSessionSchema = z.object({
   subjectId: z.string().cuid('ID de matéria inválido'),
   durationMinutes: z.number().int().min(1).max(1440), // max 24 hours
   type: z.enum(['50min', '25min', 'free']),
+  questionsTotal: z.number().int().min(0).optional().default(0),
+  questionsCorrect: z.number().int().min(0).optional().default(0),
+  notes: z.string().max(10000, 'Nota muito longa').optional(),
   createdAt: z.string().datetime().optional()
 })
 

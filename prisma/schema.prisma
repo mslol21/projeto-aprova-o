@@ -26,11 +26,15 @@ model User {
 }
 
 model Subject {
-  id       String         @id @default(cuid())
-  userId   String
-  name     String
-  user     User           @relation(fields: [userId], references: [id])
-  sessions StudySession[]
+  id              String         @id @default(cuid())
+  userId          String
+  name            String
+  weight          Int            @default(1) // Peso da matéria no ciclo (1 a 5)
+  difficulty      Int            @default(3) // Dificuldade percebida (1 a 5)
+  color           String?        @default("#3b82f6")
+  user            User           @relation(fields: [userId], references: [id])
+  sessions        StudySession[]
+  lastStudiedAt   DateTime?
 }
 
 model StudySession {
@@ -40,6 +44,14 @@ model StudySession {
   durationMinutes Int
   date            DateTime @default(now())
   type            String   // "50min", "25min", "free"
+  
+  // Módulo de Performance (PRO)
+  questionsTotal  Int?     @default(0)
+  questionsCorrect Int?    @default(0)
+  
+  // Anotações de Sessão (PRO)
+  notes           String?  @db.Text
+  
   user            User     @relation(fields: [userId], references: [id])
   subject         Subject  @relation(fields: [subjectId], references: [id])
   createdAt       DateTime @default(now())

@@ -90,16 +90,16 @@ export default function DashboardPage() {
     }
   }, [user, loading, router])
 
-  const handleAddSubject = async (name: string) => {
+  const handleAddSubject = async (data: { name: string; weight: number; color: string }) => {
     const res = await fetch('/api/subjects', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify(data)
     })
     if (res.ok) fetchData()
     else {
-        const data = await res.json()
-        alert(data.error)
+        const errData = await res.json()
+        alert(errData.error)
     }
   }
 

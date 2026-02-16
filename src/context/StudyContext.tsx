@@ -14,7 +14,7 @@ interface StudyContextType {
   pauseTimer: () => void
   resumeTimer: () => void
   resetTimer: () => void
-  saveSession: () => Promise<void>
+  saveSession: (performance?: { questionsTotal?: number; questionsCorrect?: number; notes?: string }) => Promise<void>
 }
 
 const StudyContext = createContext<StudyContextType | undefined>(undefined)
@@ -151,7 +151,7 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('timer_state')
   }
 
-  const saveSession = async () => {
+  const saveSession = async (performance?: { questionsTotal?: number; questionsCorrect?: number; notes?: string }) => {
     if (!subjectId || seconds < 60) {
         toast.error('Tempo insuficiente para salvar (mínimo 1 minuto).')
         resetTimer()
@@ -163,6 +163,9 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       subjectId,
       durationMinutes,
       type,
+      questionsTotal: performance?.questionsTotal || 0,
+      questionsCorrect: performance?.questionsCorrect || 0,
+      notes: performance?.notes || '',
       createdAt: new Date().toISOString()
     }
     

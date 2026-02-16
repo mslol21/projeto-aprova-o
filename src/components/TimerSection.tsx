@@ -10,9 +10,29 @@ interface Subject {
 }
 
 export default function TimerSection({ subjects }: { subjects: Subject[] }) {
-  const { isActive, isPaused, seconds, totalSeconds, startTimer, pauseTimer, resumeTimer, saveSession } = useStudy()
+  const { isActive, isPaused, seconds, totalSeconds, startTimer, pauseTimer, resumeTimer, saveSession, resetTimer } = useStudy()
   const [selectedSubject, setSelectedSubject] = useState('')
   const [selectedType, setSelectedType] = useState<'50min' | '25min' | 'free'>('50min')
+  
+  // Novos estados para Performance e Notas
+  const [showSummary, setShowSummary] = useState(false)
+  const [questionsTotal, setQuestionsTotal] = useState<number>(0)
+  const [questionsCorrect, setQuestionsCorrect] = useState<number>(0)
+  const [notes, setNotes] = useState('')
+  
+  // Ciclo de Estudos
+  const [recommendation, setRecommendation] = useState<any>(null)
+
+  useEffect(() => {
+    if (!isActive && !showSummary) {
+      fetch('/api/subjects/next')
+        .then(res => res.json())
+        .then(data => {
+          if (data.nextSubject) setRecommendation(data)
+        })
+        .catch(() => {})
+    }
+  }, [isActive, showSummary])
 
   const formatTime = (s: number) => {
     const mins = Math.floor(s / 60)
@@ -28,12 +48,96 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
     startTimer(selectedSubject, selectedType)
   }
 
+  const handleFinish = async () => {
+    await saveSession({
+      questionsTotal: Number(questionsTotal),
+      questionsCorrect: Number(questionsCorrect),
+      notes
+    })
+    setShowSummary(false)
+    setQuestionsTotal(0)
+    setQuestionsCorrect(0)
+    setNotes('')
+  }
+
   const timeLeft = totalSeconds > 0 ? totalSeconds - seconds : seconds
+
+  if (showSummary) {
+    return (
+      <div className="card" style={{ marginBottom: '1rem' }}>
+        <h3 style={{ marginBottom: '1.5rem', fontWeight: '800' }}>Resumo da Sessão</h3>
+        
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--muted-foreground)' }}>QUESTÕES</label>
+            <input 
+              type="number" 
+              className="input" 
+              placeholder="Total"
+              value={questionsTotal || ''} 
+              onChange={(e) => setQuestionsTotal(parseInt(e.target.value) || 0)}
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--muted-foreground)' }}>ACERTOS</label>
+            <input 
+              type="number" 
+              className="input" 
+              placeholder="Acertos"
+              value={questionsCorrect || ''} 
+              onChange={(e) => setQuestionsCorrect(parseInt(e.target.value) || 0)}
+            />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--muted-foreground)' }}>ANOTAÇÕES (O que você estudou?)</label>
+          <textarea 
+            className="input" 
+            style={{ minHeight: '100px', resize: 'vertical' }}
+            placeholder="Ex: Teoria de Atos Administrativos, páginas 1 a 20..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <button className="btn btn-secondary" onClick={() => setShowSummary(false)} style={{ flex: 1 }}>Voltar</button>
+          <button className="btn btn-primary" onClick={handleFinish} style={{ flex: 1 }}>Salvar Estudo</button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="card" style={{ marginBottom: '1rem', textAlign: 'center' }}>
       {!isActive ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {recommendation && (
+            <div style={{ 
+              backgroundColor: 'rgba(59, 130, 246, 0.08)', 
+              padding: '1rem', 
+              borderRadius: '1rem', 
+              border: '1px dashed var(--primary)',
+              marginBottom: '0.5rem',
+              textAlign: 'left'
+            }}>
+              <p style={{ fontSize: '0.75rem', fontWeight: '800', color: 'var(--primary)', textTransform: 'uppercase', marginBottom: '0.25rem' }}>🎯 Recomendação do Ciclo</p>
+              <p style={{ fontSize: '0.9375rem', fontWeight: '700' }}>Estude {recommendation.nextSubject.name}</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{recommendation.reason}</p>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setSelectedSubject(recommendation.nextSubject.id)
+                  startTimer(recommendation.nextSubject.id, selectedType)
+                }}
+                style={{ marginTop: '0.75rem', padding: '0.5rem 1rem', fontSize: '0.75rem' }}
+              >
+                Seguir Ciclo
+              </button>
+            </div>
+          )}
+
           <select 
             className="input" 
             value={selectedSubject} 
@@ -89,7 +193,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
                 <Play size={20} style={{ marginRight: '0.25rem' }} /> Retomar
               </button>
             )}
-            <button className="btn btn-secondary" onClick={saveSession} style={{ color: 'var(--destructive)' }}>
+            <button className="btn btn-secondary" onClick={() => setShowSummary(true)} style={{ color: 'var(--destructive)' }}>
               <Square size={20} style={{ marginRight: '0.25rem' }} /> Finalizar
             </button>
           </div>

@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     if (!session) return unauthorized()
 
     const body = await request.json()
-    const { subjectId, durationMinutes, type } = createSessionSchema.parse(body)
+    const { subjectId, durationMinutes, type, questionsTotal, questionsCorrect, notes } = createSessionSchema.parse(body)
 
     // Security: Verify subject ownership
     const subject = await prisma.subject.findUnique({
@@ -53,17 +53,27 @@ export async function POST(request: Request) {
       return forbidden('Matéria não encontrada ou não pertence ao usuário')
     }
 
-    const studySession = await prisma.studySession.create({
-      data: {
-        userId: session.userId,
-        subjectId,
-        durationMinutes,
-        type,
-      },
-      include: {
-        subject: true,
-      },
-    })
+    // Wrap in transaction to update session and subject timestamp
+    const [studySession] = await prisma.$transaction([
+      prisma.studySession.create({
+        data: {
+          userId: session.userId,
+          subjectId,
+          durationMinutes,
+          type,
+          questionsTotal,
+          questionsCorrect,
+          notes,
+        },
+        include: {
+          subject: true,
+        },
+      }),
+      prisma.subject.update({
+        where: { id: subjectId },
+        data: { lastStudiedAt: new Date() }
+      })
+    ])
 
     // Update streak logic
     const user = await prisma.user.findUnique({

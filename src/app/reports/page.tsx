@@ -12,6 +12,9 @@ interface Session {
   id: string
   durationMinutes: number
   createdAt: string
+  questionsTotal?: number
+  questionsCorrect?: number
+  notes?: string
   subject: {
     name: string
   }
@@ -170,18 +173,50 @@ export default function ReportsPage() {
         <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '1.25rem' }}>Histórico Recente</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           {sessions.map((s) => (
-            <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', backgroundColor: 'var(--secondary)', borderRadius: '0.75rem' }}>
-              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-                <BookOpen size={16} />
-                <div>
-                  <p style={{ fontSize: '0.875rem', fontWeight: '600', textTransform: 'capitalize' }}>{s.subject.name}</p>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{new Date(s.createdAt).toLocaleDateString('pt-BR')}</p>
+            <div key={s.id} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '1rem', backgroundColor: 'var(--secondary)', borderRadius: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                  <div style={{ padding: '0.5rem', backgroundColor: 'var(--background)', borderRadius: '0.5rem' }}>
+                    <BookOpen size={18} color="var(--primary)" />
+                  </div>
+                  <div>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '700', textTransform: 'capitalize' }}>{s.subject.name}</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>{new Date(s.createdAt).toLocaleDateString('pt-BR')} • {new Date(s.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: '800', color: 'var(--foreground)' }}>
+                    <Clock size={16} />
+                    <span>{s.durationMinutes} min</span>
+                  </div>
+                  {s.questionsTotal ? (
+                    <span style={{ 
+                      fontSize: '0.7rem', 
+                      fontWeight: '800', 
+                      color: (s.questionsCorrect || 0) / s.questionsTotal >= 0.7 ? '#10b981' : '#f59e0b',
+                      backgroundColor: 'rgba(0,0,0,0.05)',
+                      padding: '2px 6px',
+                      borderRadius: '4px'
+                    }}>
+                      {Math.round(((s.questionsCorrect || 0) / s.questionsTotal) * 100)}% ACERTO
+                    </span>
+                  ) : null}
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontWeight: '700' }}>
-                <Clock size={16} />
-                <span>{s.durationMinutes} min</span>
-              </div>
+
+              {s.notes && (
+                <div style={{ 
+                  fontSize: '0.8125rem', 
+                  color: 'var(--muted-foreground)', 
+                  fontStyle: 'italic',
+                  padding: '0.75rem',
+                  backgroundColor: 'var(--background)',
+                  borderRadius: '0.75rem',
+                  borderLeft: '2px solid var(--primary)'
+                }}>
+                  "{s.notes}"
+                </div>
+              )}
             </div>
           ))}
           {sessions.length === 0 && <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.875rem', padding: '1rem 0' }}>Nenhum estudo registrado nos últimos 7 dias.</p>}
