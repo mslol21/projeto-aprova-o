@@ -10,7 +10,10 @@ export function middleware(request: NextRequest) {
     pathname === '/' || 
     pathname === '/login' || 
     pathname === '/register' || 
-    pathname.startsWith('/api/auth')
+    pathname === '/manifest.json' ||
+    pathname === '/robots.txt' ||
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/icons/')
 
   // If there's no token and it's a private route, redirect to login
   if (!token && !isPublicRoute) {
