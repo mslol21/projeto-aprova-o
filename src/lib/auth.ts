@@ -2,30 +2,29 @@ import jwt from 'jsonwebtoken'
 import { cookies } from 'next/headers'
 import { jwtPayloadSchema, type JWTPayload } from './validation'
 
-// Obtenção do segredo com fallback apenas para build/dev
-const getSecret = () => {
+// Função para obter o segredo de forma segura em runtime
+function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
   if (!secret) {
+    // No ambiente de produção da Vercel, isso NUNCA deve acontecer se a env var estiver configurada
     if (process.env.NODE_ENV === 'production') {
-      // No build time da Vercel, o segredo pode não estar presente
-      // Retornamos um fallback temporário, mas as funções de sign/verify 
-      // vão falhar se usadas sem o segredo real no runtime.
-      return 'build-time-fallback-only'
+      console.warn('⚠️ WARNING: JWT_SECRET não encontrada em produção! Usando fallback inseguro.')
+      return 'prod-fallback-insecure-secret'
     }
     return 'dev-secret-only-for-local-development'
   }
   return secret
 }
 
-const SECRET = getSecret()
-
 export function signToken(payload: JWTPayload) {
-  return jwt.sign(payload, SECRET, { expiresIn: '7d' })
+  const secret = getJwtSecret()
+  return jwt.sign(payload, secret, { expiresIn: '7d' })
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, SECRET)
+    const secret = getJwtSecret()
+    const decoded = jwt.verify(token, secret)
     // Validate the decoded token matches our schema
     const result = jwtPayloadSchema.safeParse(decoded)
     return result.success ? result.data : null

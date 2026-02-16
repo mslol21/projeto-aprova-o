@@ -28,7 +28,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
 
   useEffect(() => {
     if (!isActive && !showSummary) {
-      fetch('/api/subjects/next')
+      fetch('/api/subjects/next', { cache: 'no-store' })
         .then(res => {
           if (res.status === 401) return null
           return res.json()

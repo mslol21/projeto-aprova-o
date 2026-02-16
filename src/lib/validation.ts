@@ -44,7 +44,7 @@ export const createNoteSchema = z.object({
 
 // JWT Payload schema
 export const jwtPayloadSchema = z.object({
-  userId: z.string().cuid(),
+  userId: z.string(),
   userName: z.string(),
   userEmail: z.string().email(),
   plan: z.enum(['free', 'premium']),

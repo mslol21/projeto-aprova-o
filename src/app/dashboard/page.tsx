@@ -67,9 +67,9 @@ export default function DashboardPage() {
   const fetchData = async () => {
     try {
       const [subsRes, sessRes, goalRes] = await Promise.all([
-        fetch('/api/subjects'),
-        fetch('/api/sessions'),
-        fetch('/api/goals')
+        fetch('/api/subjects', { cache: 'no-store' }),
+        fetch('/api/sessions', { cache: 'no-store' }),
+        fetch('/api/goals', { cache: 'no-store' })
       ])
 
       // Se qualquer um retornar 401, a sessão expirou

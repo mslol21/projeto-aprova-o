@@ -30,18 +30,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/auth/me')
+      const res = await fetch('/api/auth/me', { cache: 'no-store' })
       if (res.ok) {
         const data = await res.json()
-        setUser(prev => prev || data.user)
+        setUser(data.user)
       } else {
-        // MUITO IMPORTANTE: Só definimos como null se não tivermos um usuário já setado
-        // por um processo de login manual que aconteceu no meio do caminho.
+        // MUITO IMPORTANTE: Só limpamos se não estivermos no meio de um login
         setUser(prev => prev ? prev : null)
       }
     } catch (error) {
       console.error('Auth refresh error:', error)
-      setUser(null)
+      // Em caso de erro de rede, mantemos o usuário se ele existir
+      setUser(prev => prev ? prev : null)
     } finally {
       setLoading(false)
     }
@@ -52,15 +52,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = (userData: User) => {
-    console.log('Login iniciado para:', userData.email)
+    console.log('Login bem-sucedido para:', userData.email)
     setUser(userData)
-    setLoading(false) // Garante que o loading pare imediatamente no login
-    router.replace('/dashboard')
+    setLoading(false)
+    
+    // Pequeno delay para garantir que o cookie foi processado pelo browser
+    // antes de navegar para o dashboard que fará novos requests
+    setTimeout(() => {
+      window.location.href = '/dashboard'
+    }, 100)
   }
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
+      await fetch('/api/auth/logout', { method: 'POST', cache: 'no-store' })
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
