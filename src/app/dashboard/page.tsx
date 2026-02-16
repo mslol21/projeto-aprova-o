@@ -83,10 +83,13 @@ export default function DashboardPage() {
   }
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/login')
-    } else if (user) {
-      fetchData()
+    if (!loading) {
+      if (!user) {
+        console.log('No user session found, redirecting to login...')
+        router.replace('/login')
+      } else {
+        fetchData()
+      }
     }
   }, [user, loading, router])
 
@@ -125,7 +128,31 @@ export default function DashboardPage() {
   const totalMinutes = sessions.reduce((acc, s) => acc + s.durationMinutes, 0)
   const totalHours = totalMinutes / 60
 
-  if (loading || !user) return <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>Carregando...</div>
+  if (loading) {
+    return (
+      <div className="container" style={{ 
+        height: '80vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '1rem'
+      }}>
+        <div className="animate-spin" style={{ 
+          width: '32px', 
+          height: '32px', 
+          border: '3px solid var(--secondary)', 
+          borderTopColor: 'var(--primary)', 
+          borderRadius: '50%' 
+        }}></div>
+        <p style={{ color: 'var(--muted-foreground)', fontWeight: '600' }}>Iniciando seu prédio...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null // Permite que o useEffect faça o redirect sem mostrar "Carregando..."
+  }
 
   const SkeletonCard = () => (
     <div className="card animate-pulse" style={{ height: '150px', backgroundColor: 'var(--secondary)', opacity: 0.5 }}></div>

@@ -1,5 +1,4 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { verifyToken } from '@/lib/auth'
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
@@ -20,19 +19,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // If there's a token, verify it
-  if (token) {
-    try {
-      // Basic check: if on login/register with token, go to dashboard
-      if (pathname === '/login' || pathname === '/register') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-      }
-    } catch (e) {
-      // If token is invalid, clear it and go to login
-      const response = NextResponse.redirect(new URL('/login', request.url))
-      response.cookies.delete('token')
-      return response
-    }
+  // If there's a token and trying to access login/register, go to dashboard
+  if (token && (pathname === '/login' || pathname === '/register')) {
+    return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return NextResponse.next()

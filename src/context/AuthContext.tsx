@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
+      setLoading(true)
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(null)
       }
     } catch (error) {
+      console.error('Auth refresh error:', error)
       setUser(null)
     } finally {
       setLoading(false)
