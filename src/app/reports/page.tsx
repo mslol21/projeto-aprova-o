@@ -173,7 +173,7 @@ export default function ReportsPage() {
                 <Tooltip 
                    contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.75rem' }}
                    itemStyle={{ color: 'var(--primary)', fontWeight: '600' }}
-                   formatter={(value: number) => [`${value} horas`, 'Tempo']}
+                   formatter={(value: any) => [`${value} horas`, 'Tempo']}
                 />
                 <Bar dataKey="hours" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
@@ -225,7 +225,7 @@ export default function ReportsPage() {
                 <Tooltip 
                    contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.75rem' }}
                    itemStyle={{ color: '#10b981', fontWeight: '600' }}
-                   formatter={(value: number) => [`${value}%`, 'Taxa de Acerto']}
+                   formatter={(value: any) => [`${value}%`, 'Taxa de Acerto']}
                 />
                 <Bar dataKey="hours" radius={[0, 4, 4, 0]}>
                   {performanceData.map((entry, index) => (
