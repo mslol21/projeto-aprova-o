@@ -35,13 +35,7 @@ export default function ReportsPage() {
   const [selectedDate, setSelectedDate] = useState<string | null>(null)
   const [noteContent, setNoteContent] = useState('')
 
-  useEffect(() => {
-    if (!loading && !user) router.push('/login')
-    else if (user) {
-      fetchSessions()
-      fetchNotes()
-    }
-  }, [user, loading])
+  // useEffect removido para usar a nova versão resiliente abaixo
 
   const fetchNotes = async () => {
     const res = await fetch('/api/notes')
@@ -111,7 +105,42 @@ export default function ReportsPage() {
     }
   }
 
-  if (loading || !user) return <div className="container" style={{ padding: '2rem', textAlign: 'center' }}>Carregando...</div>
+  useEffect(() => {
+    if (!loading) {
+      if (!user) {
+        window.location.href = '/login'
+      } else {
+        fetchSessions()
+        fetchNotes()
+      }
+    }
+  }, [user, loading])
+
+  if (loading) {
+    return (
+      <div className="container" style={{ 
+        height: '80vh', 
+        display: 'flex', 
+        flexDirection: 'column', 
+        alignItems: 'center', 
+        justifyContent: 'center',
+        gap: '1rem'
+      }}>
+        <div className="animate-spin" style={{ 
+          width: '32px', 
+          height: '32px', 
+          border: '3px solid var(--secondary)', 
+          borderTopColor: 'var(--primary)', 
+          borderRadius: '50%' 
+        }}></div>
+        <p style={{ color: 'var(--muted-foreground)', fontWeight: '600' }}>Carregando estatísticas...</p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return null
+  }
 
   return (
     <div className="container" style={{ paddingBottom: '2rem' }}>

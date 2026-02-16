@@ -85,13 +85,13 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        console.log('No user session found, redirecting to login...')
-        router.replace('/login')
+        console.log('Sessão não encontrada, redirecionando...')
+        window.location.href = '/login'
       } else {
         fetchData()
       }
     }
-  }, [user, loading, router])
+  }, [user, loading])
 
   const handleAddSubject = async (data: { name: string; weight: number; color: string }) => {
     const res = await fetch('/api/subjects', {
@@ -151,7 +151,7 @@ export default function DashboardPage() {
   }
 
   if (!user) {
-    return null // Permite que o useEffect faça o redirect sem mostrar "Carregando..."
+    return null
   }
 
   const SkeletonCard = () => (
