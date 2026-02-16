@@ -343,18 +343,32 @@ export default function ReportsPage() {
           {!isPremium && (
             <div style={{ 
               marginTop: '1.5rem', 
-              padding: '1rem', 
+              padding: '1.25rem', 
               backgroundColor: 'rgba(245, 158, 11, 0.05)', 
-              borderRadius: '0.75rem', 
+              borderRadius: '1rem', 
               border: '1px dashed #f59e0b',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.75rem'
+              textAlign: 'center'
             }}>
-              <Lock size={18} color="#f59e0b" />
-              <p style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: '700', lineHeight: '1.4' }}>
-                O plano gratuito exibe apenas os últimos 7 dias. Assine o Premium para salvar e visualizar seu histórico completo e anotações.
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center', marginBottom: '1rem' }}>
+                <Lock size={20} color="#f59e0b" />
+                <p style={{ fontSize: '0.8125rem', color: '#b45309', fontWeight: '800', lineHeight: '1.4' }}>
+                  LIMITE DE HISTÓRICO ATINGIDO
+                </p>
+              </div>
+              <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginBottom: '1.25rem' }}>
+                O plano gratuito exibe apenas os últimos 7 dias. Assine o Premium para ter acesso vitalício ao seu histórico completo e anotações.
               </p>
+              <button 
+                className="btn btn-primary" 
+                style={{ backgroundColor: '#f59e0b', borderColor: '#f59e0b', fontWeight: '800', width: '100%' }}
+                onClick={async () => {
+                  const res = await fetch('/api/checkout', { method: 'POST' })
+                  const data = await res.json()
+                  if (data.init_point) window.location.href = data.init_point
+                }}
+              >
+                🚀 LIBERAR HISTÓRICO COMPLETO
+              </button>
             </div>
           )}
         </div>

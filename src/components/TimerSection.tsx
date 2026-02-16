@@ -88,7 +88,16 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
             <p style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: '1.5rem' }}>
               O Módulo de Performance e Anotações de Sessão são exclusivos para assinantes Premium.
             </p>
-            <button className="btn btn-primary" onClick={() => (window as any).location.href = '/'}>Conhecer Premium</button>
+            <button 
+              className="btn btn-primary" 
+              onClick={async () => {
+                const res = await fetch('/api/checkout', { method: 'POST' })
+                const data = await res.json()
+                if (data.init_point) window.location.href = data.init_point
+              }}
+            >
+              🚀 ASSINAR PREMIUM AGORA
+            </button>
             <button 
                 className="btn btn-secondary" 
                 style={{ marginTop: '0.5rem', fontSize: '0.75rem' }} 
@@ -170,6 +179,17 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
               <p style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted-foreground)' }}>
                 Descubra qual matéria estudar agora com o ciclo automático.
               </p>
+              <button 
+                className="btn btn-primary" 
+                style={{ marginTop: '0.75rem', padding: '0.4rem 0.8rem', fontSize: '0.7rem', backgroundColor: '#f59e0b', borderColor: '#f59e0b', fontWeight: '800' }}
+                onClick={async () => {
+                  const res = await fetch('/api/checkout', { method: 'POST' })
+                  const data = await res.json()
+                  if (data.init_point) window.location.href = data.init_point
+                }}
+              >
+                ATIVAR CICLO PREMIUM
+              </button>
             </div>
           ) : recommendation ? (
             <div style={{ 

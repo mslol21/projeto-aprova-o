@@ -179,26 +179,33 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
           <div style={{ textAlign: 'right', marginRight: '0.5rem' }}>
             <p style={{ fontSize: '0.65rem', fontWeight: '800', color: 'var(--muted-foreground)', textTransform: 'uppercase', marginBottom: '-2px' }}>Plano Atual</p>
-            <p style={{ fontSize: '0.8125rem', fontWeight: '700', color: user.plan === 'premium' ? '#10b981' : 'var(--foreground)' }}>
-              {user.plan === 'premium' ? '⭐ PREMIUM' : 'GRATUITO'}
+            <p style={{ fontSize: '0.8125rem', fontWeight: '700', color: user.plan === 'premium' ? '#10b981' : 'var(--muted-foreground)' }}>
+              {user.plan === 'premium' ? '⭐ PREMIUM' : 'PLANO GRATUITO'}
             </p>
           </div>
 
-          {user.plan === 'free' ? (
+          {user.plan !== 'premium' ? (
             <button 
               className="btn btn-primary" 
-              style={{ padding: '0.5rem 1rem', fontSize: '0.75rem', backgroundColor: '#f59e0b', borderColor: '#f59e0b', fontWeight: '800' }}
+              style={{ 
+                padding: '0.5rem 1rem', 
+                fontSize: '0.75rem', 
+                backgroundColor: '#f59e0b', 
+                borderColor: '#f59e0b', 
+                fontWeight: '800',
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+              }}
               onClick={async () => {
                 const res = await fetch('/api/checkout', { method: 'POST' })
                 const data = await res.json()
                 if (data.init_point) window.location.href = data.init_point
               }}
             >
-              ASSINAR PREMIUM
+              🚀 VIRAR PREMIUM
             </button>
           ) : (
              <div style={{ padding: '0.4rem 0.8rem', borderRadius: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: '0.7rem', fontWeight: '800' }}>
-               ATIVO
+               ASSINATURA ATIVA
              </div>
           )}
 
