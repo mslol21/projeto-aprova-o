@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSession } from '@/lib/auth'
 import { mpClient } from '@/lib/mercadopago'
-import { Preference } from 'mercadopago'
+import { PreApproval } from 'mercadopago'
 import { unauthorized, handleApiError } from '@/lib/errors'
 
 export async function POST(request: Request) {
@@ -9,34 +9,26 @@ export async function POST(request: Request) {
     const session = await getSession()
     if (!session) return unauthorized()
 
-    const preference = new Preference(mpClient)
+    const preApproval = new PreApproval(mpClient)
 
-    const result = await preference.create({
+    const result = await preApproval.create({
       body: {
-        items: [
-          {
-            id: 'premium-plan',
-            title: 'Projeto Aprovação - Plano Premium',
-            quantity: 1,
-            unit_price: 19.90,
-            currency_id: 'BRL',
-          }
-        ],
-        payer: {
-          email: session.email,
+        reason: 'Projeto Aprovação - Plano Premium Mensal',
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: 19.90,
+          currency_id: 'BRL',
         },
-        back_urls: {
-          success: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard?payment=success`,
-          failure: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard?payment=failure`,
-          pending: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard?payment=pending`,
-        },
-        auto_return: 'approved',
-        notification_url: 'https://projetoaprovacao.vercel.app/api/webhooks/mercadopago',
+        back_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard?payment=success`,
+        payer_email: session.email,
         external_reference: session.userId, // Identificador do usuário para o webhook
+        status: 'pending' // Começa pendente até o usuário autorizar no portal do MP
       }
     })
 
-    return NextResponse.json({ init_point: result.init_point })
+    // O PreApproval retorna o link de checkout no init_point ou sandbox_init_point
+    return NextResponse.json({ init_point: (result as any).init_point || (result as any).sandbox_init_point })
   } catch (error) {
     return handleApiError(error)
   }

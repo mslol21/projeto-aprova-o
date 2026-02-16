@@ -1,37 +1,39 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { mpClient } from '@/lib/mercadopago'
-import { Payment } from 'mercadopago'
+import { Payment, PreApproval } from 'mercadopago'
 
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     console.log('🔔 Webhook Mercado Pago recebido:', body)
 
-    // O Mercado Pago envia o tipo de recurso e o ID
-    // Ex: { "type": "payment", "data": { "id": "123456" } }
-    if (body.type === 'payment' && body.data?.id) {
-      const paymentId = body.data.id
-      const payment = new Payment(mpClient)
-      
-      const paymentData = await payment.get({ id: paymentId })
-      
-      console.log('💰 Status do Pagamento:', paymentData.status)
+    let userId: string | undefined
 
+    // Caso 1: Pagamento Único
+    if (body.type === 'payment' && body.data?.id) {
+      const payment = new Payment(mpClient)
+      const paymentData = await payment.get({ id: body.data.id })
       if (paymentData.status === 'approved') {
-        const userId = paymentData.external_reference
-        
-        if (userId) {
-          console.log(`✅ Upgrade para Premium: Usuário ${userId}`)
-          
-          await prisma.user.update({
-            where: { id: userId },
-            data: { plan: 'premium' }
-          })
-          
-          return NextResponse.json({ message: 'Plan updated to premium' })
-        }
+        userId = paymentData.external_reference
       }
+    } 
+    // Caso 2: Assinatura Recorrente
+    else if (body.type === 'subscription_preapproval' && body.data?.id) {
+      const preApproval = new PreApproval(mpClient)
+      const subscriptionData = await preApproval.get({ id: body.data.id })
+      if (subscriptionData.status === 'authorized') {
+        userId = subscriptionData.external_reference
+      }
+    }
+
+    if (userId) {
+      console.log(`✅ Upgrade para Premium via ${body.type}: Usuário ${userId}`)
+      await prisma.user.update({
+        where: { id: userId },
+        data: { plan: 'premium' }
+      })
+      return NextResponse.json({ message: 'Plan updated to premium' })
     }
 
     // Responder 200 para o MP parar de tentar enviar o mesmo webhook
