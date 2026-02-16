@@ -72,6 +72,13 @@ export default function DashboardPage() {
         fetch('/api/goals')
       ])
 
+      // Se qualquer um retornar 401, a sessão expirou
+      if (subsRes.status === 401 || sessRes.status === 401 || goalRes.status === 401) {
+        console.warn('Sessão expirada detectada via API. Fazendo logout...')
+        logout()
+        return
+      }
+
       if (subsRes.ok) setSubjects(await subsRes.json())
       if (sessRes.ok) setSessions(await sessRes.json())
       if (goalRes.ok) setGoal(await goalRes.json())
@@ -188,15 +195,16 @@ export default function DashboardPage() {
             <button 
               className="btn btn-primary" 
               style={{ 
-                padding: '0.5rem 1rem', 
-                fontSize: '0.75rem', 
+                padding: '0.4rem 0.8rem', 
+                fontSize: '0.7rem', 
                 backgroundColor: '#f59e0b', 
                 borderColor: '#f59e0b', 
                 fontWeight: '800',
-                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)'
+                boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
               }}
               onClick={async () => {
                 const res = await fetch('/api/checkout', { method: 'POST' })
+                if (res.status === 401) return logout()
                 const data = await res.json()
                 if (data.init_point) window.location.href = data.init_point
               }}
@@ -204,7 +212,7 @@ export default function DashboardPage() {
               🚀 VIRAR PREMIUM
             </button>
           ) : (
-             <div style={{ padding: '0.4rem 0.8rem', borderRadius: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: '0.7rem', fontWeight: '800' }}>
+             <div style={{ padding: '0.4rem 0.8rem', borderRadius: '0.75rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: '#10b981', fontSize: '0.65rem', fontWeight: '800' }}>
                ASSINATURA ATIVA
              </div>
           )}

@@ -29,9 +29,12 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
   useEffect(() => {
     if (!isActive && !showSummary) {
       fetch('/api/subjects/next')
-        .then(res => res.json())
+        .then(res => {
+          if (res.status === 401) return null
+          return res.json()
+        })
         .then(data => {
-          if (data.nextSubject) setRecommendation(data)
+          if (data && data.nextSubject) setRecommendation(data)
         })
         .catch(() => {})
     }
