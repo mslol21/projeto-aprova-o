@@ -13,14 +13,14 @@ export async function POST(request: Request) {
 
     const result = await preApproval.create({
       body: {
-        reason: 'Projeto Aprovação - Plano Premium Mensal',
+        reason: 'Projeto Aprovação - Plano Premium',
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
           transaction_amount: 19.90,
           currency_id: 'BRL',
         },
-        back_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard`,
+        back_url: 'https://projetoaprovacao.vercel.app/dashboard',
         payer_email: session.email,
         external_reference: session.userId,
       }
