@@ -9,9 +9,7 @@ export async function GET() {
     const session = await getSession()
 
     if (!session) {
-      const response = unauthorized()
-      response.cookies.delete('token')
-      return response
+      return unauthorized()
     }
 
     let user = await prisma.user.findUnique({
@@ -19,9 +17,7 @@ export async function GET() {
     })
 
     if (!user) {
-      const response = unauthorized('Usuário não encontrado')
-      response.cookies.delete('token')
-      return response
+      return unauthorized('Usuário não encontrado')
     }
 
     if (user && user.lastStudyDate) {

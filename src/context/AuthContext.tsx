@@ -33,7 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
-        setUser(data.user)
+        // Só atualizamos se o usuário ainda for null, para evitar sobrescrever um login recente
+        setUser(prev => prev || data.user)
       } else {
         setUser(null)
       }
@@ -50,8 +51,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const login = (userData: User) => {
+    console.log('Login iniciado para:', userData.email)
     setUser(userData)
-    router.push('/dashboard')
+    setLoading(false) // Garante que o loading pare imediatamente no login
+    router.replace('/dashboard')
   }
 
   const logout = async () => {
