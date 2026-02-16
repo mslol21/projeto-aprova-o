@@ -33,10 +33,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const res = await fetch('/api/auth/me')
       if (res.ok) {
         const data = await res.json()
-        // Só atualizamos se o usuário ainda for null, para evitar sobrescrever um login recente
         setUser(prev => prev || data.user)
       } else {
-        setUser(null)
+        // MUITO IMPORTANTE: Só definimos como null se não tivermos um usuário já setado
+        // por um processo de login manual que aconteceu no meio do caminho.
+        setUser(prev => prev ? prev : null)
       }
     } catch (error) {
       console.error('Auth refresh error:', error)
