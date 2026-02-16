@@ -6,9 +6,10 @@ import { unauthorized, forbidden, handleApiError, notFound } from '@/lib/errors'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getSession()
     if (!session) return unauthorized()
 
@@ -17,14 +18,14 @@ export async function PATCH(
 
     // Verify ownership
     const existingSubject = await prisma.subject.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingSubject) return notFound('Matéria não encontrada')
     if (existingSubject.userId !== session.userId) return forbidden()
 
     const subject = await prisma.subject.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         name,
         weight,
@@ -41,21 +42,22 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getSession()
     if (!session) return unauthorized()
 
     const existingSubject = await prisma.subject.findUnique({
-      where: { id: params.id }
+      where: { id }
     })
 
     if (!existingSubject) return notFound('Matéria não encontrada')
     if (existingSubject.userId !== session.userId) return forbidden()
 
     await prisma.subject.delete({
-      where: { id: params.id }
+      where: { id }
     })
 
     return new NextResponse(null, { status: 204 })
