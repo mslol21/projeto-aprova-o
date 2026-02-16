@@ -640,24 +640,39 @@ export default function LandingPage() {
               </li>
               <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <CheckCircle2 size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Histórico completo</span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Módulo de Performance (Questões)</span>
               </li>
               <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <CheckCircle2 size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Prédio sem limite</span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Ciclo de Estudos Automático</span>
               </li>
               <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <CheckCircle2 size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Calendário avançado</span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Histórico Vitalício e Notas</span>
               </li>
               <li style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
                 <CheckCircle2 size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Suporte prioritário</span>
+                <span style={{ fontSize: '0.9375rem', fontWeight: '600' }}>Prédio sem limite de andares</span>
               </li>
             </ul>
             <button 
               className="btn btn-primary" 
-              onClick={() => router.push('/register')}
+              onClick={async () => {
+                try {
+                  const res = await fetch('/api/checkout', { method: 'POST' })
+                  const data = await res.json()
+                  if (data.init_point) {
+                    window.location.href = data.init_point
+                  } else if (res.status === 401) {
+                    router.push('/login?redirect=/')
+                  } else {
+                    alert('Erro ao iniciar checkout. Tente novamente.')
+                  }
+                } catch (error) {
+                  console.error('Checkout error:', error)
+                  alert('Erro de conexão ao iniciar checkout.')
+                }
+              }}
               style={{ 
                 width: '100%', 
                 padding: '1rem',

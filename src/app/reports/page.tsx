@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft, BookOpen, Clock, MessageSquare } from 'lucide-react'
+import { ArrowLeft, BookOpen, Clock, MessageSquare, Lock } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import StudyCalendar from '@/components/StudyCalendar'
 import { toast } from 'sonner'
@@ -27,6 +27,7 @@ interface ChartItem {
 
 export default function ReportsPage() {
   const { user, loading } = useAuth()
+  const isPremium = user?.plan === 'premium'
   const router = useRouter()
   const [sessions, setSessions] = useState<Session[]>([])
   const [chartData, setChartData] = useState<ChartItem[]>([])
@@ -68,6 +69,8 @@ export default function ReportsPage() {
     }
   }
 
+  const [performanceData, setPerformanceData] = useState<ChartItem[]>([])
+
   const fetchSessions = async () => {
     try {
       const res = await fetch('/api/sessions')
@@ -75,11 +78,20 @@ export default function ReportsPage() {
         const data = await res.json()
         setSessions(data)
         
-        // Group by subject
+        // Group by subject for hours
         const subjectsMap: Record<string, number> = {}
+        // Group by subject for performance
+        const perfMap: Record<string, { total: number; correct: number }> = {}
+
         data.forEach((s: Session) => {
           const name = s.subject.name
           subjectsMap[name] = (subjectsMap[name] || 0) + (s.durationMinutes / 60)
+          
+          if (s.questionsTotal && s.questionsTotal > 0) {
+            if (!perfMap[name]) perfMap[name] = { total: 0, correct: 0 }
+            perfMap[name].total += s.questionsTotal
+            perfMap[name].correct += s.questionsCorrect || 0
+          }
         })
 
         const chart = Object.keys(subjectsMap).map(name => ({
@@ -87,6 +99,12 @@ export default function ReportsPage() {
           hours: parseFloat(subjectsMap[name].toFixed(1))
         }))
         setChartData(chart)
+
+        const perfChart = Object.keys(perfMap).map(name => ({
+          name,
+          hours: Math.round((perfMap[name].correct / perfMap[name].total) * 100)
+        }))
+        setPerformanceData(perfChart)
       }
     } catch (error) {
       console.error('Failed to fetch sessions', error)
@@ -151,10 +169,11 @@ export default function ReportsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <XAxis dataKey="name" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis fontSize={11} tickLine={false} axisLine={false} unit="h" />
                 <Tooltip 
-                  contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.75rem' }}
-                  itemStyle={{ color: 'var(--primary)', fontWeight: '600' }}
+                   contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.75rem' }}
+                   itemStyle={{ color: 'var(--primary)', fontWeight: '600' }}
+                   formatter={(value: number) => [`${value} horas`, 'Tempo']}
                 />
                 <Bar dataKey="hours" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, index) => (
@@ -165,6 +184,60 @@ export default function ReportsPage() {
             </ResponsiveContainer>
           ) : (
             <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem' }}>Nenhum dado para exibir.</p>
+          )}
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem', position: 'relative' }}>
+        <h2 style={{ fontSize: '1rem', fontWeight: '600', marginBottom: '0.25rem' }}>Análise de Performance</h2>
+        <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', marginBottom: '1.5rem' }}>% de acertos baseado nas questões resolvidas</p>
+        
+        {!user?.plan || user.plan === 'free' ? (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '1.5rem',
+            padding: '2rem',
+            textAlign: 'center'
+          }}>
+            <Lock size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+            <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '0.5rem' }}>Análise Premium</h4>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: '1rem' }}>
+              Assine o Premium para ver sua taxa de acertos por matéria e identificar seus pontos fracos.
+            </p>
+            <button className="btn btn-primary" onClick={() => router.push('/')}>Ver Planos</button>
+          </div>
+        ) : null}
+
+        <div style={{ width: '100%', height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: user?.plan === 'premium' ? 1 : 0.3 }}>
+          {performanceData.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={performanceData} layout="vertical" margin={{ left: 40 }}>
+                <XAxis type="number" domain={[0, 100]} fontSize={11} tickLine={false} axisLine={false} unit="%" />
+                <YAxis dataKey="name" type="category" fontSize={11} tickLine={false} axisLine={false} width={80} />
+                <Tooltip 
+                   contentStyle={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: '0.75rem' }}
+                   itemStyle={{ color: '#10b981', fontWeight: '600' }}
+                   formatter={(value: number) => [`${value}%`, 'Taxa de Acerto']}
+                />
+                <Bar dataKey="hours" radius={[0, 4, 4, 0]}>
+                  {performanceData.map((entry, index) => (
+                    <Cell key={`cell-perf-${index}`} fill={entry.hours >= 70 ? '#10b981' : entry.hours >= 50 ? '#f59e0b' : '#ef4444'} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p style={{ color: 'var(--muted-foreground)', fontSize: '0.875rem', textAlign: 'center' }}>
+              Registre o número de questões ao finalizar seus estudos para ver este gráfico.
+            </p>
           )}
         </div>
       </div>
@@ -205,26 +278,53 @@ export default function ReportsPage() {
               </div>
 
               {s.notes && (
-                <div style={{ 
-                  fontSize: '0.8125rem', 
-                  color: 'var(--muted-foreground)', 
-                  fontStyle: 'italic',
-                  padding: '0.75rem',
-                  backgroundColor: 'var(--background)',
-                  borderRadius: '0.75rem',
-                  borderLeft: '2px solid var(--primary)'
-                }}>
-                  "{s.notes}"
-                </div>
+                isPremium ? (
+                  <div style={{ 
+                    fontSize: '0.8125rem', 
+                    color: 'var(--muted-foreground)', 
+                    fontStyle: 'italic',
+                    padding: '0.75rem',
+                    backgroundColor: 'var(--background)',
+                    borderRadius: '0.75rem',
+                    borderLeft: '2px solid var(--primary)'
+                  }}>
+                    "{s.notes}"
+                  </div>
+                ) : (
+                  <div style={{ 
+                    fontSize: '0.75rem', 
+                    color: 'var(--muted-foreground)', 
+                    padding: '0.5rem',
+                    backgroundColor: 'var(--background)',
+                    borderRadius: '0.5rem',
+                    border: '1px dashed var(--border)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <Lock size={12} />
+                    <span>Anotação disponível no Plano Premium</span>
+                  </div>
+                )
               )}
             </div>
           ))}
           {sessions.length === 0 && <p style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontSize: '0.875rem', padding: '1rem 0' }}>Nenhum estudo registrado nos últimos 7 dias.</p>}
           
-          {user.plan === 'free' && (
-            <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: 'var(--accent)', borderRadius: '0.75rem', border: '1px dashed var(--primary)' }}>
-              <p style={{ fontSize: '0.75rem', textAlign: 'center', color: 'var(--primary)', fontWeight: '600' }}>
-                O plano gratuito exibe apenas os últimos 7 dias. Migre para o Premium para ver o histórico completo. (R$ 19,90/mês)
+          {!isPremium && (
+            <div style={{ 
+              marginTop: '1.5rem', 
+              padding: '1rem', 
+              backgroundColor: 'rgba(245, 158, 11, 0.05)', 
+              borderRadius: '0.75rem', 
+              border: '1px dashed #f59e0b',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem'
+            }}>
+              <Lock size={18} color="#f59e0b" />
+              <p style={{ fontSize: '0.75rem', color: '#b45309', fontWeight: '700', lineHeight: '1.4' }}>
+                O plano gratuito exibe apenas os últimos 7 dias. Assine o Premium para salvar e visualizar seu histórico completo e anotações.
               </p>
             </div>
           )}

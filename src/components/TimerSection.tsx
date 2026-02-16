@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react'
 import { useStudy } from '@/context/StudyContext'
-import { Play, Pause, Square, Clock } from 'lucide-react'
+import { useAuth } from '@/context/AuthContext'
+import { Play, Pause, Square, Clock, Lock } from 'lucide-react'
 
 interface Subject {
   id: string
@@ -10,6 +11,8 @@ interface Subject {
 }
 
 export default function TimerSection({ subjects }: { subjects: Subject[] }) {
+  const { user } = useAuth()
+  const isPremium = user?.plan === 'premium'
   const { isActive, isPaused, seconds, totalSeconds, startTimer, pauseTimer, resumeTimer, saveSession, resetTimer } = useStudy()
   const [selectedSubject, setSelectedSubject] = useState('')
   const [selectedType, setSelectedType] = useState<'50min' | '25min' | 'free'>('50min')
@@ -64,7 +67,40 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
 
   if (showSummary) {
     return (
-      <div className="card" style={{ marginBottom: '1rem' }}>
+      <div className="card" style={{ marginBottom: '1rem', position: 'relative' }}>
+        {!isPremium && (
+          <div style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundColor: 'rgba(255,255,255,0.7)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: '1.5rem',
+            padding: '1.5rem',
+            textAlign: 'center'
+          }}>
+            <Lock size={32} color="var(--primary)" style={{ marginBottom: '1rem' }} />
+            <h4 style={{ fontSize: '1rem', fontWeight: '800', marginBottom: '0.5rem' }}>Recurso Premium</h4>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--muted-foreground)', marginBottom: '1.5rem' }}>
+              O Módulo de Performance e Anotações de Sessão são exclusivos para assinantes Premium.
+            </p>
+            <button className="btn btn-primary" onClick={() => (window as any).location.href = '/'}>Conhecer Premium</button>
+            <button 
+                className="btn btn-secondary" 
+                style={{ marginTop: '0.5rem', fontSize: '0.75rem' }} 
+                onClick={() => {
+                    saveSession()
+                    setShowSummary(false)
+                }}
+            >
+                Salvar apenas tempo (Grátis)
+            </button>
+          </div>
+        )}
         <h3 style={{ marginBottom: '1.5rem', fontWeight: '800' }}>Resumo da Sessão</h3>
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
@@ -74,6 +110,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
               type="number" 
               className="input" 
               placeholder="Total"
+              disabled={!isPremium}
               value={questionsTotal || ''} 
               onChange={(e) => setQuestionsTotal(parseInt(e.target.value) || 0)}
             />
@@ -84,6 +121,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
               type="number" 
               className="input" 
               placeholder="Acertos"
+              disabled={!isPremium}
               value={questionsCorrect || ''} 
               onChange={(e) => setQuestionsCorrect(parseInt(e.target.value) || 0)}
             />
@@ -96,6 +134,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
             className="input" 
             style={{ minHeight: '100px', resize: 'vertical' }}
             placeholder="Ex: Teoria de Atos Administrativos, páginas 1 a 20..."
+            disabled={!isPremium}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
           />
@@ -113,7 +152,26 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
     <div className="card" style={{ marginBottom: '1rem', textAlign: 'center' }}>
       {!isActive ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {recommendation && (
+          {!isPremium ? (
+            <div style={{ 
+              backgroundColor: 'rgba(241, 245, 249, 1)', 
+              padding: '1rem', 
+              borderRadius: '1rem', 
+              border: '1px dashed var(--border)',
+              marginBottom: '0.5rem',
+              textAlign: 'left',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--muted-foreground)', marginBottom: '0.25rem' }}>
+                <Lock size={14} />
+                <p style={{ fontSize: '0.7rem', fontWeight: '800', textTransform: 'uppercase' }}>Ciclo de Estudos Premium</p>
+              </div>
+              <p style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--muted-foreground)' }}>
+                Descubra qual matéria estudar agora com o ciclo automático.
+              </p>
+            </div>
+          ) : recommendation ? (
             <div style={{ 
               backgroundColor: 'rgba(59, 130, 246, 0.08)', 
               padding: '1rem', 
@@ -136,7 +194,7 @@ export default function TimerSection({ subjects }: { subjects: Subject[] }) {
                 Seguir Ciclo
               </button>
             </div>
-          )}
+          ) : null}
 
           <select 
             className="input" 

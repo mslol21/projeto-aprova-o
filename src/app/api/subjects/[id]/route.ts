@@ -1,31 +1,64 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getSession } from '@/lib/auth'
-import { unauthorized, forbidden, handleApiError } from '@/lib/errors'
+import { createSubjectSchema } from '@/lib/validation'
+import { unauthorized, forbidden, handleApiError, notFound } from '@/lib/errors'
 
-export async function DELETE(
+export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const session = await getSession()
     if (!session) return unauthorized()
 
-    const { id } = await params
+    const body = await request.json()
+    const { name, weight, difficulty, color } = createSubjectSchema.parse(body)
 
-    const subject = await prisma.subject.findUnique({
-      where: { id },
+    // Verify ownership
+    const existingSubject = await prisma.subject.findUnique({
+      where: { id: params.id }
     })
 
-    if (!subject || subject.userId !== session.userId) {
-      return forbidden('Matéria não encontrada ou acesso negado')
-    }
+    if (!existingSubject) return notFound('Matéria não encontrada')
+    if (existingSubject.userId !== session.userId) return forbidden()
+
+    const subject = await prisma.subject.update({
+      where: { id: params.id },
+      data: {
+        name,
+        weight,
+        difficulty,
+        color
+      }
+    })
+
+    return NextResponse.json(subject)
+  } catch (error) {
+    return handleApiError(error)
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const session = await getSession()
+    if (!session) return unauthorized()
+
+    const existingSubject = await prisma.subject.findUnique({
+      where: { id: params.id }
+    })
+
+    if (!existingSubject) return notFound('Matéria não encontrada')
+    if (existingSubject.userId !== session.userId) return forbidden()
 
     await prisma.subject.delete({
-      where: { id },
+      where: { id: params.id }
     })
 
-    return NextResponse.json({ success: true })
+    return new NextResponse(null, { status: 204 })
   } catch (error) {
     return handleApiError(error)
   }

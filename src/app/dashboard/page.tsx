@@ -103,6 +103,19 @@ export default function DashboardPage() {
     }
   }
 
+  const handleUpdateSubject = async (id: string, data: { name: string; weight: number; color: string }) => {
+    const res = await fetch(`/api/subjects/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    if (res.ok) fetchData()
+    else {
+        const errData = await res.json()
+        alert(errData.error)
+    }
+  }
+
   const handleDeleteSubject = async (id: string) => {
     if (!confirm('Excluir esta matéria?')) return
     const res = await fetch(`/api/subjects/${id}`, { method: 'DELETE' })
@@ -137,6 +150,19 @@ export default function DashboardPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {user.plan === 'free' && (
+            <button 
+              className="btn btn-primary" 
+              style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', backgroundColor: '#f59e0b', borderColor: '#f59e0b' }}
+              onClick={async () => {
+                const res = await fetch('/api/checkout', { method: 'POST' })
+                const data = await res.json()
+                if (data.init_point) window.location.href = data.init_point
+              }}
+            >
+              🚀 Upgrade Premium
+            </button>
+          )}
            <button onClick={toggleTheme} className="btn-icon" style={{ color: 'var(--muted-foreground)' }}>
              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
            </button>
@@ -174,8 +200,10 @@ export default function DashboardPage() {
           <SubjectList 
             subjects={subjects} 
             onAdd={handleAddSubject} 
+            onUpdate={handleUpdateSubject}
             onDelete={handleDeleteSubject} 
             canAdd={user.plan === 'premium' || subjects.length < 6}
+            isPremium={user.plan === 'premium'}
           />
         </>
       )}
