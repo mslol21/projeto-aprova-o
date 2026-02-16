@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  plan         String         @default("free") // "free" or "premium"
+  subjects     Subject[]
+  sessions     StudySession[]
+  goals        WeeklyGoal[]
+  notes        DailyNote[]
+  streakCount   Int            @default(0)
+  lastStudyDate DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+model Subject {
+  id       String         @id @default(cuid())
+  userId   String
+  name     String
+  user     User           @relation(fields: [userId], references: [id])
+  sessions StudySession[]
+}
+
+model StudySession {
+  id              String   @id @default(cuid())
+  userId          String
+  subjectId       String
+  durationMinutes Int
+  date            DateTime @default(now())
+  type            String   // "50min", "25min", "free"
+  user            User     @relation(fields: [userId], references: [id])
+  subject         Subject  @relation(fields: [subjectId], references: [id])
+  createdAt       DateTime @default(now())
+}
+
+model WeeklyGoal {
+  id          String @id @default(cuid())
+  userId      String
+  targetHours Int
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model DailyNote {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // ISO date string YYYY-MM-DD
+  content   String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date])
+}

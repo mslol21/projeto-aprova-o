@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /reports
+Disallow: /api/
+
+Sitemap: https://projetoaprovacao.com/sitemap.xml
