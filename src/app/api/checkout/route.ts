@@ -20,10 +20,9 @@ export async function POST(request: Request) {
           transaction_amount: 19.90,
           currency_id: 'BRL',
         },
-        back_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard?payment=success`,
+        back_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://projetoaprovacao.vercel.app'}/dashboard`,
         payer_email: session.email,
-        external_reference: session.userId, // Identificador do usuário para o webhook
-        status: 'pending' // Começa pendente até o usuário autorizar no portal do MP
+        external_reference: session.userId,
       }
     })
 
